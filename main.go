@@ -3,9 +3,11 @@ package main
 import (
     "fmt"
     "os"
+    "time"
 )
 
 func Log (v ...interface{}) {
+    fmt.Fprintf(os.Stderr,"%s ",time.Now().Format(time.UnixDate))
     fmt.Fprint(os.Stderr,v...)
     fmt.Fprint(os.Stderr,"\n")
 }
@@ -26,5 +28,9 @@ func main() {
 
     go httpServer (bodychan, &config)
     go tcpServer (in, targets, &config)
-    parser (bodychan, in, targets)
+    go parser (bodychan, in, targets)
+    for {
+        Log("in map: ",len(targets))
+        time.Sleep(time.Second*time.Duration(config.Main.Expires))
+    }
 }

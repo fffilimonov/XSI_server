@@ -44,6 +44,6 @@ func httpServer (bodychan chan []byte, config *ConfigT) {
         for _,event := range config.Main.Event {
             sendPost(event, config)
         }
-        time.Sleep(time.Second*600)
+        time.Sleep(time.Second*time.Duration(config.Main.Expires))
     }
 }

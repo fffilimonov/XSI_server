@@ -6,18 +6,10 @@ import (
     "strings"
 )
 
-func ClientsList (clientList *list.List) {
-    for e := clientList.Front(); e != nil; e = e.Next() {
-        client := e.Value.(Client)
-        Log("client: ",client.Conn)
-    }
-}
-
 func (c *Client) Read(buffer []byte) bool {
     _, error := c.Conn.Read(buffer)
     if error != nil {
         c.Close()
-        Log(c.Conn," Read: ", error)
         return false
     }
     return true
@@ -40,7 +32,7 @@ func (c *Client) RemoveMe() {
     for entry := c.ClientList.Front(); entry != nil; entry = entry.Next() {
         client := entry.Value.(Client)
         if c.Equal(&client) {
-            Log("RemoveMe: ", c.Conn)
+            Log("RemoveMe: ", c.Conn.RemoteAddr())
             c.ClientList.Remove(entry)
         }
     }
@@ -104,7 +96,7 @@ func ClientHandler(conn net.Conn, ch chan string, clientList *list.List, targets
         }
         newClient.Incoming <-tmp.GetTarget(target)
     }
-    Log("ClientHandler: ", newClient.Conn)
+    Log("ClientHandler: ", newClient.Conn.RemoteAddr())
 }
 
 func tcpServer(in chan string, targets map[string]TargetT, config *ConfigT) {
