@@ -65,6 +65,7 @@ func ClientReader(client *Client) {
 }
 
 func ClientSender(client *Client) {
+loop:
     for {
         select {
             case buffer := <-client.Incoming:
@@ -72,7 +73,7 @@ func ClientSender(client *Client) {
                 client.Conn.Write([]byte(send))
             case <-client.Quit:
                 client.Conn.Close()
-                break
+                break loop
             }
     }
 }
