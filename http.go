@@ -3,6 +3,7 @@ package main
 import (
     "bytes"
     "io/ioutil"
+    "net"
     "net/http"
     "time"
 )
@@ -14,36 +15,78 @@ func handlePost (bodychan chan []byte) http.HandlerFunc {
     }
 }
 
-func sendPost(Event string, config *ConfigT) {
+func dialTimeout(network, addr string) (net.Conn, error) {
+    return net.DialTimeout(network, addr, time.Duration(time.Second*2))
+}
+
+func sendPost(Event string, config *ConfigT) error {
     url := ConcatStr("","http://",config.Main.RemoteHost,"/com.broadsoft.xsi-events/v2.0/system")
     var xmlStr string = ConcatStr("",
                                 "<?xml version=\"1.0\" encoding=\"utf-8\"?><Subscription xmlns=\"http://schema.broadsoft.com/xsi\"><event>",
                                 Event,
                                 "</event><httpContact><uri>",
-                                config.Main.HTTPServer,
+                                config.Main.HttpContact,
                                 "/events/system</uri></httpContact><applicationId>",
                                 config.Main.AppID,
                                 "</applicationId></Subscription>")
     req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(xmlStr)))
-    req.SetBasicAuth(config.Main.User, config.Main.Password)
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        Log(err)
+    if err == nil {
+        req.SetBasicAuth(config.Main.User, config.Main.Password)
+        transport := http.Transport{
+            Dial: dialTimeout,
+        }
+        client := http.Client{
+            Transport: &transport,
+        }
+        resp, err := client.Do(req)
+        if err != nil {
+            Log(err)
+            return err
+        } else {
+            resp.Body.Close()
+            Log("Subscribe Status:", resp.Status)
+        }
     }
-    defer resp.Body.Close()
-    Log("response Status:", resp.Status)
+    return err
 }
 
 func httpServer (bodychan chan []byte, config *ConfigT) {
+    var flag bool
     go func () {
         http.HandleFunc("/events/system", handlePost(bodychan))
-        http.ListenAndServe(config.Main.HTTPBind, nil)
+        http.ListenAndServe(config.Main.HttpBind, nil)
     }()
     for {
+        flag=false
         for _,event := range config.Main.Event {
-            sendPost(event, config)
+            err:=sendPost(event, config)
+            if err != nil {
+                flag=true
+            }
         }
-        time.Sleep(time.Second*time.Duration(config.Main.Expires))
+        if flag {
+            time.Sleep(time.Second*1)
+        } else {
+            time.Sleep(time.Second*time.Duration(config.Main.Expires))
+        }
+    }
+}
+
+func httpClient (bodychan chan []byte, config *ConfigT) {
+    for {
+        select {
+            case body := <-bodychan:
+            req, err := http.NewRequest("POST", config.Reloadable.ASURL, bytes.NewBuffer(body))
+            if err == nil {
+                client := &http.Client{}
+                resp, err := client.Do(req)
+                if err != nil {
+                    Log(err)
+                } else {
+                    resp.Body.Close()
+                    Log("Send Status:", resp.Status)
+                }
+            }
+        }
     }
 }

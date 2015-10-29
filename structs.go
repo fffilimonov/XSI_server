@@ -7,7 +7,7 @@ import (
 )
 
 type Client struct {
-    Event []string
+    Targets []string
     Incoming chan string
     Outgoing chan string
     Conn net.Conn
@@ -35,6 +35,7 @@ type edata struct {
     Pers string `xml:"call>personality"`
     CCstatus string `xml:"agentStateInfo>state"`
     State string `xml:"call>state"`
+    Cause string `xml:"call>releaseCause>internalReleaseCause"`
     Addr string `xml:"call>remoteParty>address"`
     CallID string `xml:"call>callId"`
     Qcalls int `xml:"position"`
@@ -54,11 +55,15 @@ type ConfigT struct {
         User string
         Password string
         RemoteHost string
-        HTTPBind string
-        HTTPServer string
+        HttpBind string
+        HttpContact string
         Expires int
         Event []string
         AppID string
         TcpBind string
+        ASURL string
+    }
+    Reloadable struct {
+        ASURL string
     }
 }

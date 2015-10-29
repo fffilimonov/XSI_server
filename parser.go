@@ -16,7 +16,7 @@ func ConcatStr (sep string, args ... string) string {
     return strings.Join(args, sep)
 }
 
-func parser (bodychan chan []byte, in chan string, targets map[string]TargetT) {
+func parser (bodychan chan []byte, in chan string, targets map[string]TargetT, notifychan chan []byte) {
     for {
         select {
             case body := <-bodychan:
@@ -47,6 +47,9 @@ func parser (bodychan chan []byte, in chan string, targets map[string]TargetT) {
                         if parsedBody.Edata.Atime == "" {
                             tmp.AddMCall(parsedBody.Edata.Rtime, parsedBody.Edata.Addr)
                             in <-tmp.GetMlist(parsedBody.Target)
+                        }
+                        if parsedBody.Edata.Cause == "Temporarily Unavailable" {
+                            notifychan <- body
                         }
                     }
 

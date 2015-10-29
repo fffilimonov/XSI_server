@@ -44,7 +44,7 @@ func IOHandler(Incoming <-chan string, clientList *list.List) {
         sinput := strings.Split(input,";")
         for e := clientList.Front(); e != nil; e = e.Next() {
             client := e.Value.(Client)
-            for _,ctarget := range client.Event {
+            for _,ctarget := range client.Targets {
                 if ctarget == sinput[0] {
                     client.Incoming <-input
                 }
@@ -85,12 +85,12 @@ func ClientHandler(conn net.Conn, ch chan string, clientList *list.List, targets
         Log("Client connection error: ", error)
     }
     income := string(buffer[0:bytesRead])
-    events := strings.Split(income, " ")
-    newClient := &Client{events, make(chan string), ch, conn, make(chan bool), clientList}
+    ctargets := strings.Split(income, " ")
+    newClient := &Client{ctargets, make(chan string), ch, conn, make(chan bool), clientList}
     go ClientSender(newClient)
     go ClientReader(newClient)
     clientList.PushBack(*newClient)
-    for _,target := range events {
+    for _,target := range ctargets {
         tmp:=targets[target]
         if tmp.List!=nil {
             newClient.Incoming <-tmp.GetMlist(target)
