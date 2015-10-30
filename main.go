@@ -23,15 +23,18 @@ func main() {
     var confFile string = os.Args[1]
     config:=ReadConfig(confFile)
 
-    bodychan := make(chan []byte)
-    notifychan := make(chan []byte)
+    bodychan := make(chan []byte,100)
+    notifychan := make(chan []byte,100)
+    statschan := make(chan []byte,100)
+
     targets := make(map[string]TargetT)
     in := make(chan string)
 
     go httpServer (bodychan, &config)
     go tcpServer (in, targets, &config)
-    go parser (bodychan, in, targets, notifychan)
-    go httpClient (notifychan, &config)
+    go parser (bodychan, in, targets, notifychan, statschan)
+    go httpClient (notifychan, config.Reloadable.ASURL)
+    go httpClient (statschan, config.Reloadable.StatsURL)
 
     sig := make(chan os.Signal, 1)
     signal.Notify(sig, syscall.SIGHUP)

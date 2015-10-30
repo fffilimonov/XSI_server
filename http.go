@@ -27,7 +27,7 @@ func sendPost(Event string, config *ConfigT) error {
                                 "</event><httpContact><uri>",
                                 config.Main.HttpContact,
                                 "/events/system</uri></httpContact><applicationId>",
-                                config.Main.AppID,
+                                ConcatStr("",config.Main.AppID,Event),
                                 "</applicationId></Subscription>")
     req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(xmlStr)))
     if err == nil {
@@ -72,11 +72,11 @@ func httpServer (bodychan chan []byte, config *ConfigT) {
     }
 }
 
-func httpClient (bodychan chan []byte, config *ConfigT) {
+func httpClient (bodychan chan []byte, URL string) {
     for {
         select {
             case body := <-bodychan:
-            req, err := http.NewRequest("POST", config.Reloadable.ASURL, bytes.NewBuffer(body))
+            req, err := http.NewRequest("POST", URL, bytes.NewBuffer(body))
             if err == nil {
                 client := &http.Client{}
                 resp, err := client.Do(req)

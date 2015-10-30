@@ -16,13 +16,17 @@ func ConcatStr (sep string, args ... string) string {
     return strings.Join(args, sep)
 }
 
-func parser (bodychan chan []byte, in chan string, targets map[string]TargetT, notifychan chan []byte) {
+func parser (bodychan chan []byte, in chan string, targets map[string]TargetT, notifychan chan []byte, statschan chan []byte) {
     for {
         select {
             case body := <-bodychan:
                 parsedBody := ParseXml(body)
                 if parsedBody.Target!="" {
                     tmp:=targets[parsedBody.Target]
+
+                    if parsedBody.AppID == "GolangClientCall Center Queue" || parsedBody.AppID == "GolangClientCall Center Agent" {
+                        statschan <- body
+                    }
 
                     if tmp.List == nil {
                         tmp.List = ring.New(15)

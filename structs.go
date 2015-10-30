@@ -26,6 +26,7 @@ type TargetT struct {
 
 type EventT struct {
     Target string `xml:"targetId"`
+    AppID string `xml:"externalApplicationId"`
     Edata edata `xml:"eventData"`
 }
 
@@ -61,9 +62,9 @@ type ConfigT struct {
         Event []string
         AppID string
         TcpBind string
-        ASURL string
     }
     Reloadable struct {
         ASURL string
+        StatsURL string
     }
 }
