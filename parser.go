@@ -24,7 +24,9 @@ func parser (bodychan chan []byte, in chan string, targets map[string]TargetT, n
                 if parsedBody.Target!="" {
                     tmp:=targets[parsedBody.Target]
 
-                    if parsedBody.AppID == "GolangClientCall Center Queue" || parsedBody.AppID == "GolangClientCall Center Agent" {
+                    if parsedBody.AppID == "GolangClientCall Center Queue" ||
+                     parsedBody.AppID == "GolangClientCall Center Agent" ||
+                     tmp.CCstatus == "Available" {
                         statschan <- body
                     }
 
@@ -43,6 +45,7 @@ func parser (bodychan chan []byte, in chan string, targets map[string]TargetT, n
                     if parsedBody.Edata.Pers == "Terminator" && parsedBody.Edata.State == "Alerting" {
                         tmp.Addr=parsedBody.Edata.Addr
                         tmp.CallID=parsedBody.Edata.CallID
+                        notifychan <- body
                     }
 
                     if parsedBody.Edata.Pers == "Terminator" && parsedBody.Edata.State == "Released" {
@@ -52,9 +55,11 @@ func parser (bodychan chan []byte, in chan string, targets map[string]TargetT, n
                             tmp.AddMCall(parsedBody.Edata.Rtime, parsedBody.Edata.Addr)
                             in <-tmp.GetMlist(parsedBody.Target)
                         }
-                        if parsedBody.Edata.Cause == "Temporarily Unavailable" {
-                            notifychan <- body
-                        }
+                        notifychan <- body
+                    }
+
+                    if parsedBody.Edata.Pers == "Terminator" && parsedBody.Edata.State == "Answered" {
+                        notifychan <- body
                     }
 
                     if parsedBody.Edata.Etype == "xsi:ACDCallAddedEvent" {
