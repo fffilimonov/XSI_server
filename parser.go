@@ -58,7 +58,7 @@ func parser (bodychan chan []byte, in chan string, targets map[string]TargetT, n
                         notifychan <- body
                     }
 
-                    if parsedBody.Edata.Pers == "Terminator" && parsedBody.Edata.State == "Answered" {
+                    if parsedBody.Edata.Pers == "Terminator" && parsedBody.Edata.State == "Active" {
                         notifychan <- body
                     }
 
