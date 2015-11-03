@@ -57,7 +57,7 @@ func ClientReader(client *Client) {
     buffer := make([]byte, 2048)
     for client.Read(buffer) {
         send := string(buffer)
-        client.Outgoing <- send
+        client.Incoming <- send
         for i := 0; i < 2048; i++ {
             buffer[i] = 0x00
         }
